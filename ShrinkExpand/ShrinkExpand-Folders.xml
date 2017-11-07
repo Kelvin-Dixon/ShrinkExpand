@@ -1,0 +1,15 @@
+<?xml version="1.0" standalone="yes"?>
+<FoldersToWatch>
+  <Folder>
+    <Enabled>True</Enabled>
+    <Source>C:\Test\TestSE\Shrink</Source>
+    <Destination>C:\Test\TestSE\Expand</Destination>
+    <Shrink>True</Shrink>
+  </Folder>
+  <Folder>
+    <Enabled>True</Enabled>
+    <Source>C:\Test\TestSE\Expand</Source>
+    <Destination>C:\Test\TestSE\Shrink</Destination>
+    <Shrink>False</Shrink>
+  </Folder>
+</FoldersToWatch>
