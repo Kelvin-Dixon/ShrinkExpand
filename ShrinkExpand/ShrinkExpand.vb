@@ -209,7 +209,7 @@ Public Class ShrinkExpand
             'EventLog1.WriteEntry("Moved: " + vbNewLine + Source + vbNewLine + "To: " + vbNewLine + Destination + vbNewLine, EventLogEntryType.Information)
             WriteLog("Moved: " + Source + vbNewLine + "                         To: " + Destination)
         Catch ex As Exception
-            EventLog1.WriteEntry(ex.Message + Source, EventLogEntryType.Error)
+            EventLog1.WriteEntry(Source + vbNewLine + ex.Message, EventLogEntryType.Error)
         End Try
     End Sub
 
