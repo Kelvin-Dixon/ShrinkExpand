@@ -16,7 +16,8 @@ Public Class ShrinkExpand
     Dim MaxLogFileSize As Integer = 10000 'Default is 10K
     Dim ServiceDirectory As String
     Dim myMessage As String = ""
-
+    Dim Recognize As String = ""
+    Dim RecognizeFiles() As String
     Public Sub New()
         ' This call is required by the designer.
         InitializeComponent()
@@ -36,15 +37,18 @@ Public Class ShrinkExpand
         Try
             If My.Computer.Registry.LocalMachine.OpenSubKey("Software\FFXNZ\ShrinkExpand") IsNot Nothing Then
                 ConfigPath = My.Computer.Registry.GetValue("HKEY_LOCAL_MACHINE\Software\FFXNZ\ShrinkExpand", "ConfigFile", ConfigPath.ToString).ToString
-                LogPath = My.Computer.Registry.GetValue("HKEY_LOCAL_MACHINE\Software\FFXNZ\ShrinkExpand", "LogPath", ConfigPath.ToString).ToString
+                LogPath = My.Computer.Registry.GetValue("HKEY_LOCAL_MACHINE\Software\FFXNZ\ShrinkExpand", "LogPath", LogPath.ToString).ToString
                 TimerInterval = CInt(My.Computer.Registry.GetValue("HKEY_LOCAL_MACHINE\Software\FFXNZ\ShrinkExpand", "TimerInterval", TimerInterval).ToString)
                 MaxLogFileSize = CInt(My.Computer.Registry.GetValue("HKEY_LOCAL_MACHINE\Software\FFXNZ\ShrinkExpand", "LogSize", TimerInterval).ToString)
+                Recognize = My.Computer.Registry.GetValue("HKEY_LOCAL_MACHINE\Software\FFXNZ\ShrinkExpand", "Recognize", Recognize.ToString).ToString
             Else
+                Recognize = "*.eps,*.pdf,*.ps"
                 My.Computer.Registry.LocalMachine.CreateSubKey("Software\FFXNZ\ShrinkExpand")
                 My.Computer.Registry.SetValue("HKEY_LOCAL_MACHINE\Software\FFXNZ\ShrinkExpand", "ConfigFile", ConfigPath)
                 My.Computer.Registry.SetValue("HKEY_LOCAL_MACHINE\Software\FFXNZ\ShrinkExpand", "LogPath", LogPath)
                 My.Computer.Registry.SetValue("HKEY_LOCAL_MACHINE\Software\FFXNZ\ShrinkExpand", "TimerInterval", TimerInterval)
                 My.Computer.Registry.SetValue("HKEY_LOCAL_MACHINE\Software\FFXNZ\ShrinkExpand", "LogSize", MaxLogFileSize)
+                My.Computer.Registry.SetValue("HKEY_LOCAL_MACHINE\Software\FFXNZ\ShrinkExpand", "Recognize", Recognize)
             End If
         Finally
             My.Computer.Registry.LocalMachine.Close()
@@ -54,11 +58,13 @@ Public Class ShrinkExpand
 
     Protected Overrides Sub OnStart(ByVal args() As String)
         ' Add code here to start your service. This method should set things in motion so your service can do its work.
+        RecognizeFiles = Recognize.Split(",")
         LogFile = LogPath + "\" + appName + ".Log"
         WriteLog("ShrinkExpand Starting")
         EventLog1.WriteEntry("ShrinkExpand Starting from " + IO.Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory).ToString)
         EventLog1.WriteEntry("ShrinkExpand Config File: " + ConfigPath, EventLogEntryType.Information)
         WriteLog("ShrinkExpand Config File: " + ConfigPath)
+        WriteLog("ShrinkExpand Recognize: " + Recognize)
         If File.Exists(ConfigPath) Then
             dsFolders.Clear()
             dsFolders.ReadXml(ConfigPath)
@@ -100,9 +106,7 @@ Public Class ShrinkExpand
                     CheckFolder(Source, Destination, False)
                 End If
             End If
-
         Next
-
     End Sub
 
     Private Sub WriteLog(Message As String)
@@ -148,7 +152,7 @@ Public Class ShrinkExpand
         Dim files As ReadOnlyCollection(Of String)
         If Shrink Then
             'Do Subfolders
-            files = My.Computer.FileSystem.GetFiles(SourcePath, FileIO.SearchOption.SearchAllSubDirectories, "*")
+            files = My.Computer.FileSystem.GetFiles(SourcePath, FileIO.SearchOption.SearchAllSubDirectories, RecognizeFiles)
             For Each file In files
                 'EventLog1.WriteEntry("Shrink - " + file, EventLogEntryType.Information)
                 If IsNotLocked(file) Then
@@ -160,7 +164,7 @@ Public Class ShrinkExpand
             Next
         Else
             'Root Folder Only
-            files = My.Computer.FileSystem.GetFiles(SourcePath, FileIO.SearchOption.SearchTopLevelOnly, "*")
+            files = My.Computer.FileSystem.GetFiles(SourcePath, FileIO.SearchOption.SearchTopLevelOnly, RecognizeFiles)
             For Each file In files
                 'EventLog1.WriteEntry("Expand - " + file, EventLogEntryType.Information)
                 If IsNotLocked(file) Then
@@ -205,7 +209,7 @@ Public Class ShrinkExpand
             Directory.CreateDirectory(DestinationDirectory)
         End If
         Try
-            My.Computer.FileSystem.MoveFile(Source, Destination)
+            My.Computer.FileSystem.MoveFile(Source, Destination, True)
             'EventLog1.WriteEntry("Moved: " + vbNewLine + Source + vbNewLine + "To: " + vbNewLine + Destination + vbNewLine, EventLogEntryType.Information)
             WriteLog("Moved: " + Source + vbNewLine + "                         To: " + Destination)
         Catch ex As Exception
