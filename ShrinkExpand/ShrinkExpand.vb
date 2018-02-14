@@ -179,13 +179,12 @@ Public Class ShrinkExpand
 
     Private Function IsNotLocked(FilePath As String) As Boolean
         Dim stream As FileStream = Nothing
-        Dim testFile As FileInfo = My.Computer.FileSystem.GetFileInfo(FilePath)
         Try
-            stream = File.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None)
+            stream = File.Open(FilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None)
             stream.Close()
-            Return False
-        Catch ex As Exception
             Return True
+        Catch ex As Exception
+            Return False
         End Try
     End Function
 
